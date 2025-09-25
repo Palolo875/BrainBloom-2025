@@ -16,6 +16,7 @@ const nextConfig = {
     '*.replit.com', 
     '*.repl.co',
     '*.riker.replit.dev',
+    '*.janeway.replit.dev',
     '127.0.0.1',
     'localhost'
   ],
