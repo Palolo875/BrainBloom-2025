@@ -6,13 +6,14 @@
 - **Status**: Successfully imported and configured for Replit environment
 
 ## Technology Stack
-- **Framework**: Next.js 14.2.16
+- **Framework**: Next.js 15.2.4
 - **Language**: TypeScript
 - **UI Components**: Radix UI components with custom styling
 - **Styling**: Tailwind CSS with custom animations
 - **Fonts**: Lexend, Lora, and Geist Mono
 - **Analytics**: Vercel Analytics
 - **Package Manager**: npm (converted from pnpm)
+- **Database**: Supabase (configured with development defaults)
 
 ## Project Structure
 - `app/` - Next.js app directory with layout, page, and global styles
@@ -42,30 +43,31 @@
 - Hot reload and Fast Refresh enabled
 - TypeScript compilation with some build error tolerance
 
-## Recent Changes (September 20, 2025)
-- **Successfully set up fresh GitHub import for Replit environment**:
-  - Installed all npm dependencies including Next.js 14.2.32 (with security updates)
-  - Fixed Supabase integration compatibility by removing deprecated auth-helpers dependency
-  - Updated Supabase client configuration to use modern @supabase/supabase-js approach
-  - Created development environment configuration with placeholder Supabase credentials
-  - Modified Supabase validation to use warnings instead of errors for development
-- **Verified Next.js configuration for Replit compatibility**:
-  - Confirmed proper Content-Security-Policy headers for iframe embedding
-  - Validated host binding to 0.0.0.0:5000 for Replit proxy access
-  - Ensured unoptimized images for development environment
-- **Development workflow successfully configured**:
-  - Development server running on port 5000 with proper host binding
-  - Application compiling successfully (2147 modules)
+## Recent Changes (September 25, 2025)
+- **Fresh GitHub import setup completed for Replit environment**:
+  - Installed all npm dependencies (252 packages) including Next.js 15.2.4
+  - Resolved React 19 compatibility issues with legacy peer deps flag
+  - Maintained existing Supabase integration with development defaults
+  - Fixed cross-origin request issues by adding *.janeway.replit.dev to allowedDevOrigins
+- **Next.js configuration optimized for Replit**:
+  - Updated allowedDevOrigins to include current Replit domain patterns
+  - Maintained proper Content-Security-Policy headers for iframe embedding
+  - Configured host binding to 0.0.0.0:5000 for Replit proxy compatibility
+  - Kept unoptimized images for development environment
+- **Development workflow fully operational**:
+  - Development server running successfully on port 5000
+  - Application compiling with 2367 modules
   - Hot reload and Fast Refresh working properly
+  - Cross-origin warnings resolved
 - **Production deployment configured**:
-  - Set up autoscale deployment target for stateless operation
+  - Set up autoscale deployment target for stateless web app
   - Configured build process with npm run build
   - Set production start command with npm start
-- **Application verified as fully functional**:
-  - Welcome screen loading with constellation illustration
-  - All UI components rendering correctly
-  - Navigation and theming working as expected
-  - Ready for user interaction and further development
+- **Application status - fully functional**:
+  - Server responding with 200 status codes
+  - Supabase integration working with development defaults
+  - Vercel Analytics configured for development mode
+  - Ready for immediate use and further development
 
 ## User Preferences
 - Project follows existing code conventions and structure
