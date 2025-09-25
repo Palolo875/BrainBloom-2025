@@ -1,0 +1,421 @@
+Parfait pour Replit Agent 3
+Framework: Next.js 14 + TypeScript
+  ✅ Excellent support Replit
+  ✅ Hot reload instantané
+  ✅ App Router moderne
+  ✅ Built-in optimizations
+  ✅ Déploiement Vercel en 1 clic
+
+Build: Next.js built-in bundler
+  ✅ Zero config nécessaire
+  ✅ Optimisations automatiques
+  ✅ Compatible Replit Agent
+Styling & Components - Productivité Max
+// Design System Rapide mais Pro
+Styling: Tailwind CSS 3 + shadcn/ui
+  ✅ Composants pré-faits de qualité
+  ✅ Design system cohérent
+  ✅ Customization facile
+  ✅ Replit Agent connaît bien
+
+Icons: Lucide React
+  ✅ Bundle optimal
+  ✅ Cohérence visuelle parfaite
+  ✅ Tree-shaking natif
+State & Data - Simplicité Puissante
+// State Management Efficace
+State: Zustand + persist middleware
+  ✅ 2.9kb gzipped
+  ✅ TypeScript first-class
+  ✅ Persistence automatique
+  ✅ DevTools intégrés
+
+Database: Dexie.js (IndexedDB wrapper)
+  ✅ API moderne et simple
+  ✅ Transactions ACID
+  ✅ Queries performantes
+  ✅ Schema migrations
+IA Locale - Équilibre Performance/Puissance
+// IA Stratégique
+AI Engine: Transformers.js + Worker
+  ✅ Modèle embeddings : all-MiniLM-L6-v2 (23MB)
+  ✅ Web Worker pour performance
+  ✅ Recherche sémantique réelle
+  ✅ Évolutif vers plus de modèles
+
+Search: Algorithme hybride custom
+  ✅ Full-text + semantic search
+  ✅ Similarité cosinus optimisée
+  ✅ Cache intelligent
+📁 Architecture Fichiers Replit-Friendly
+brainbloom/
+├── app/                      # Next.js 14 App Router
+│   ├── globals.css          # Tailwind + custom CSS
+│   ├── layout.tsx           # Layout principal
+│   ├── page.tsx             # Homepage
+│   ├── dashboard/
+│   │   └── page.tsx         # Dashboard principal
+│   ├── editor/
+│   │   └── [noteId]/
+│   │       └── page.tsx     # Éditeur de note
+│   └── graph/
+│       └── page.tsx         # Vue graphe
+├── components/
+│   ├── ui/                  # shadcn/ui components
+│   ├── notes/               # Composants spécifiques notes
+│   ├── graph/               # Composants graphe
+│   └── layout/              # Layout components
+├── lib/
+│   ├── db.ts               # Dexie database setup
+│   ├── ai.ts               # AI engine
+│   ├── stores/             # Zustand stores
+│   └── utils.ts            # Utilities
+├── workers/
+│   └── ai-worker.ts        # Web Worker pour IA
+├── public/
+│   └── models/             # Modèles IA pré-téléchargés
+└── package.json
+🧠 Code Architecture - Prêt pour Replit Agent
+Store Principal (Zustand)
+// lib/stores/notes.ts
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { immer } from 'zustand/middleware/immer'
+
+interface Note {
+  id: string
+  title: string
+  content: string
+  tags: string[]
+  createdAt: Date
+  updatedAt: Date
+  embedding?: number[]
+}
+
+interface NotesStore {
+  notes: Note[]
+  currentNote: Note | null
+  searchQuery: string
+  
+  // Actions
+  addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => void
+  updateNote: (id: string, updates: Partial<Note>) => void
+  deleteNote: (id: string) => void
+  setCurrentNote: (note: Note | null) => void
+  setSearchQuery: (query: string) => void
+  
+  // Computed
+  getFilteredNotes: () => Note[]
+  getNoteById: (id: string) => Note | undefined
+}
+
+export const useNotesStore = create<NotesStore>()(
+  persist(
+    immer((set, get) => ({
+      notes: [],
+      currentNote: null,
+      searchQuery: '',
+      
+      addNote: (noteData) => set((state) => {
+        const note = {
+          ...noteData,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        state.notes.push(note)
+      }),
+      
+      updateNote: (id, updates) => set((state) => {
+        const noteIndex = state.notes.findIndex(n => n.id === id)
+        if (noteIndex !== -1) {
+          state.notes[noteIndex] = {
+            ...state.notes[noteIndex],
+            ...updates,
+            updatedAt: new Date()
+          }
+        }
+      }),
+      
+      deleteNote: (id) => set((state) => {
+        state.notes = state.notes.filter(n => n.id !== id)
+        if (state.currentNote?.id === id) {
+          state.currentNote = null
+        }
+      }),
+      
+      setCurrentNote: (note) => set((state) => {
+        state.currentNote = note
+      }),
+      
+      setSearchQuery: (query) => set((state) => {
+        state.searchQuery = query
+      }),
+      
+      getFilteredNotes: () => {
+        const { notes, searchQuery } = get()
+        if (!searchQuery) return notes
+        
+        return notes.filter(note => 
+          note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+      },
+      
+      getNoteById: (id) => {
+        return get().notes.find(note => note.id === id)
+      }
+    })),
+    {
+      name: 'brainbloom-notes',
+      version: 1
+    }
+  )
+)
+AI Engine Optimisé
+// lib/ai.ts
+class AIEngine {
+  private worker: Worker | null = null
+  private isInitialized = false
+  
+  async initialize() {
+    if (this.isInitialized) return
+    
+    // Chargement du worker
+    this.worker = new Worker(new URL('../workers/ai-worker.ts', import.meta.url))
+    
+    // Initialisation du modèle
+    await this.sendToWorker({ type: 'initialize' })
+    this.isInitialized = true
+  }
+  
+  async generateEmbedding(text: string): Promise<number[]> {
+    if (!this.isInitialized) await this.initialize()
+    
+    const result = await this.sendToWorker({
+      type: 'embed',
+      payload: { text }
+    })
+    
+    return result.embedding
+  }
+  
+  async semanticSearch(query: string, notes: Note[]): Promise<Note[]> {
+    const queryEmbedding = await this.generateEmbedding(query)
+    
+    // Calcul similarité avec notes existantes
+    const similarities = await Promise.all(
+      notes.map(async note => {
+        if (!note.embedding) {
+          note.embedding = await this.generateEmbedding(note.content)
+        }
+        
+        const similarity = this.cosineSimilarity(queryEmbedding, note.embedding)
+        return { note, similarity }
+      })
+    )
+    
+    return similarities
+      .filter(item => item.similarity > 0.3)
+      .sort((a, b) => b.similarity - a.similarity)
+      .map(item => item.note)
+  }
+  
+  private cosineSimilarity(a: number[], b: number[]): number {
+    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
+    const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0))
+    const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0))
+    return dotProduct / (magnitudeA * magnitudeB)
+  }
+  
+  private sendToWorker(message: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (!this.worker) {
+        reject(new Error('Worker not initialized'))
+        return
+      }
+      
+      const id = crypto.randomUUID()
+      
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data.id === id) {
+          this.worker!.removeEventListener('message', handleMessage)
+          if (event.data.error) {
+            reject(new Error(event.data.error))
+          } else {
+            resolve(event.data.result)
+          }
+        }
+      }
+      
+      this.worker.addEventListener('message', handleMessage)
+      this.worker.postMessage({ ...message, id })
+    })
+  }
+}
+
+export const aiEngine = new AIEngine()
+Composant Éditeur Principal
+// components/notes/note-editor.tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useNotesStore } from '@/lib/stores/notes'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Save, Sparkles } from 'lucide-react'
+import { aiEngine } from '@/lib/ai'
+
+interface NoteEditorProps {
+  noteId?: string
+}
+
+export function NoteEditor({ noteId }: NoteEditorProps) {
+  const { notes, addNote, updateNote, getNoteById } = useNotesStore()
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  
+  const existingNote = noteId ? getNoteById(noteId) : null
+  
+  useEffect(() => {
+    if (existingNote) {
+      setTitle(existingNote.title)
+      setContent(existingNote.content)
+      setTags(existingNote.tags)
+    }
+  }, [existingNote])
+  
+  // Auto-save avec debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      if (title || content) {
+        await handleSave(false) // Silent save
+      }
+    }, 2000)
+    
+    return () => clearTimeout(timeoutId)
+  }, [title, content, tags])
+  
+  // Suggestions IA en temps réel
+  useEffect(() => {
+    if (content.length > 100) {
+      generateSuggestions()
+    }
+  }, [content])
+  
+  const generateSuggestions = async () => {
+    try {
+      // Recherche de notes similaires
+      const similarNotes = await aiEngine.semanticSearch(content, notes)
+      const suggestions = similarNotes
+        .slice(0, 3)
+        .map(note => note.title)
+      
+      setSuggestions(suggestions)
+    } catch (error) {
+      console.error('Error generating suggestions:', error)
+    }
+  }
+  
+  const handleSave = async (showFeedback = true) => {
+    if (!title && !content) return
+    
+    setIsSaving(true)
+    
+    try {
+      const noteData = {
+        title: title || 'Note sans titre',
+        content,
+        tags
+      }
+      
+      if (existingNote) {
+        updateNote(existingNote.id, noteData)
+      } else {
+        addNote(noteData)
+      }
+      
+      // Générer embedding en arrière-plan
+      setTimeout(() => {
+        aiEngine.generateEmbedding(content)
+      }, 100)
+      
+      if (showFeedback) {
+        // Toast de succès
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-serif font-bold text-slate-800">
+          {existingNote ? 'Éditer la note' : 'Nouvelle note'}
+        </h1>
+        <Button 
+          onClick={() => handleSave(true)}
+          disabled={isSaving}
+          className="gap-2"
+        >
+          <Save className="w-4 h-4" />
+          {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+        </Button>
+      </div>
+      
+      {/* Titre */}
+      <Input
+        placeholder="Titre de votre note..."
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="text-xl font-semibold border-none bg-transparent px-0 focus:ring-0"
+      />
+      
+      {/* Contenu */}
+      <Textarea
+        placeholder="Commencez à écrire votre idée..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="min-h-[400px] border-none bg-transparent px-0 resize-none focus:ring-0"
+      />
+      
+      {/* Tags */}
+      <div className="flex flex-wrap gap-2">
+        {tags.map(tag => (
+          <Badge key={tag} variant="secondary">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+      
+      {/* Suggestions IA */}
+      {suggestions.length > 0 && (
+        <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-4 border border-orange-100">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-medium text-orange-700">
+              Notes similaires
+            </span>
+          </div>
+          <div className="space-y-1">
+            {suggestions.map(suggestion => (
+              <div key={suggestion} className="text-sm text-orange-600">
+                → {suggestion}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
