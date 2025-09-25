@@ -1,0 +1,193 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* BrainBloom "Palette des Rêves" color system */
+  --background: #fbf9f6; /* Toile de Lin - warm linen background */
+  --foreground: #5c5470; /* Gris Plume - soft gray text */
+  --card: #ffffff; /* Pure white for soft UI cards */
+  --card-foreground: #5c5470; /* Gris Plume for card text */
+  --popover: #ffffff; /* White for popovers */
+  --popover-foreground: #5c5470; /* Gris Plume for popover text */
+  --primary: #f3ab9a; /* Pêche du Matin - warm peach primary */
+  --primary-foreground: #ffffff; /* White text on primary */
+  --secondary: #b9b2d8; /* Lavande des Songes - soft lavender */
+  --secondary-foreground: #5c5470; /* Gris Plume on secondary */
+  --muted: #fbf9f6; /* Same as background for muted areas */
+  --muted-foreground: rgba(92, 84, 112, 0.7); /* 70% opacity Gris Plume */
+  --accent: #faddaf; /* Miel Doré - golden honey accent */
+  --accent-foreground: #5c5470; /* Gris Plume on accent */
+  --destructive: #e74c3c; /* Soft red for destructive actions */
+  --destructive-foreground: #ffffff; /* White text on destructive */
+  --border: rgba(92, 84, 112, 0.1); /* Very subtle border */
+  --input: #ffffff; /* White input backgrounds */
+  --ring: #a4bfa0; /* Vert Bourgeon - soft green for focus rings */
+  --chart-1: #f3ab9a; /* Pêche du Matin */
+  --chart-2: #b9b2d8; /* Lavande des Songes */
+  --chart-3: #faddaf; /* Miel Doré */
+  --chart-4: #a4bfa0; /* Vert Bourgeon */
+  --chart-5: #5c5470; /* Gris Plume */
+  --radius: 1rem; /* More generous rounding for organic feel */
+  --sidebar: #fbf9f6; /* Same as background */
+  --sidebar-foreground: #5c5470; /* Gris Plume */
+  --sidebar-primary: #f3ab9a; /* Pêche du Matin */
+  --sidebar-primary-foreground: #ffffff; /* White */
+  --sidebar-accent: #faddaf; /* Miel Doré */
+  --sidebar-accent-foreground: #5c5470; /* Gris Plume */
+  --sidebar-border: rgba(92, 84, 112, 0.1); /* Subtle border */
+  --sidebar-ring: #a4bfa0; /* Vert Bourgeon */
+
+  /* Custom BrainBloom accent colors */
+  --accent-peach: #f3ab9a; /* Pêche du Matin */
+  --accent-lavender: #b9b2d8; /* Lavande des Songes */
+  --accent-honey: #faddaf; /* Miel Doré */
+  --accent-green: #a4bfa0; /* Vert Bourgeon */
+}
+
+.dark {
+  /* Dark mode with warmer tones for BrainBloom */
+  --background: #2a2438; /* Dark warm purple */
+  --foreground: #f5f3f0; /* Warm off-white */
+  --card: #342d47; /* Slightly lighter dark purple */
+  --card-foreground: #f5f3f0; /* Warm off-white */
+  --popover: #342d47; /* Same as card */
+  --popover-foreground: #f5f3f0; /* Warm off-white */
+  --primary: #f3ab9a; /* Keep peach in dark mode */
+  --primary-foreground: #2a2438; /* Dark background on primary */
+  --secondary: #b9b2d8; /* Keep lavender in dark mode */
+  --secondary-foreground: #2a2438; /* Dark background on secondary */
+  --muted: #342d47; /* Card color for muted */
+  --muted-foreground: rgba(245, 243, 240, 0.7); /* 70% opacity warm white */
+  --accent: #faddaf; /* Keep honey in dark mode */
+  --accent-foreground: #2a2438; /* Dark background on accent */
+  --destructive: #e74c3c; /* Same red */
+  --destructive-foreground: #f5f3f0; /* Warm white */
+  --border: rgba(245, 243, 240, 0.1); /* Subtle light border */
+  --input: #342d47; /* Card color for inputs */
+  --ring: #a4bfa0; /* Keep green focus ring */
+  --chart-1: #f3ab9a; /* Pêche du Matin */
+  --chart-2: #b9b2d8; /* Lavande des Songes */
+  --chart-3: #faddaf; /* Miel Doré */
+  --chart-4: #a4bfa0; /* Vert Bourgeon */
+  --chart-5: #f5f3f0; /* Warm white */
+  --sidebar: #2a2438; /* Same as background */
+  --sidebar-foreground: #f5f3f0; /* Warm white */
+  --sidebar-primary: #f3ab9a; /* Pêche du Matin */
+  --sidebar-primary-foreground: #2a2438; /* Dark background */
+  --sidebar-accent: #faddaf; /* Miel Doré */
+  --sidebar-accent-foreground: #2a2438; /* Dark background */
+  --sidebar-border: rgba(245, 243, 240, 0.1); /* Subtle border */
+  --sidebar-ring: #a4bfa0; /* Vert Bourgeon */
+
+  /* Dark mode custom accent colors */
+  --accent-peach: #f3ab9a;
+  --accent-lavender: #b9b2d8;
+  --accent-honey: #faddaf;
+  --accent-green: #a4bfa0;
+}
+
+@theme inline {
+  /* Updated font variables for BrainBloom typography */
+  --font-sans: var(--font-lexend); /* Lexend for body text */
+  --font-serif: var(--font-lora); /* Lora for headings */
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Custom BrainBloom accent color utilities */
+  --color-accent-peach: var(--accent-peach);
+  --color-accent-lavender: var(--accent-lavender);
+  --color-accent-honey: var(--accent-honey);
+  --color-accent-green: var(--accent-green);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Custom utility classes for BrainBloom */
+  .soft-shadow {
+    box-shadow: 8px 8px 16px rgba(92, 84, 112, 0.2), -4px -4px 8px rgba(255, 255, 255, 0.8);
+  }
+
+  .soft-shadow-inset {
+    box-shadow: inset 4px 4px 8px rgba(92, 84, 112, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+  }
+
+  .soft-shadow-hover {
+    box-shadow: 12px 12px 24px rgba(92, 84, 112, 0.25), -6px -6px 12px rgba(255, 255, 255, 0.9);
+    transform: translate(-1px, -1px);
+  }
+
+  .text-accent-peach {
+    color: var(--accent-peach);
+  }
+
+  .text-accent-lavender {
+    color: var(--accent-lavender);
+  }
+
+  .text-accent-honey {
+    color: var(--accent-honey);
+  }
+
+  .text-accent-green {
+    color: var(--accent-green);
+  }
+
+  .bg-accent-peach {
+    background-color: var(--accent-peach);
+  }
+
+  .bg-accent-lavender {
+    background-color: var(--accent-lavender);
+  }
+
+  .bg-accent-honey {
+    background-color: var(--accent-honey);
+  }
+
+  .bg-accent-green {
+    background-color: var(--accent-green);
+  }
+}
