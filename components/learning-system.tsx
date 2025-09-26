@@ -205,7 +205,7 @@ export function LearningSystem({ onBack }: LearningSystemProps) {
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-serif text-foreground font-bold mb-2">La Distillerie</h1>
+                <h1 className="text-2xl md:text-3xl font-serif text-foreground font-bold mb-2">L'apprentissage</h1>
                 <p className="text-muted-foreground text-pretty">
                   Transformez l'information brute en connaissance durable.
                 </p>

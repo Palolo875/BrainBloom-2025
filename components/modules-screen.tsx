@@ -31,11 +31,11 @@ export function ModulesScreen({ onBack }: ModulesScreenProps) {
       description: "Gestionnaire de tâches avancé avec vue Kanban, métadonnées et suggestions IA",
       icon: Compass,
       enabled: true,
-      illustration: "compass",
+      illustration: "gestionnaire-de-taches",
     },
     {
       id: "journaling",
-      name: "Journal Quotidien",
+      name: "Journal",
       description: "Système de journaling avec tracking d'humeur et analyse de corrélations",
       icon: Calendar,
       enabled: false,
@@ -43,7 +43,7 @@ export function ModulesScreen({ onBack }: ModulesScreenProps) {
     },
     {
       id: "learning",
-      name: "Révision Espacée",
+      name: "L'apprentissage",
       description: "Système d'apprentissage avec flashcards et répétition espacée",
       icon: Brain,
       enabled: false,
