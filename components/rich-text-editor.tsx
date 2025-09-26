@@ -28,7 +28,7 @@ export function RichTextEditor({ note, onSave, onClose, onCreateNote }: RichText
 
   const contentRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLInputElement>(null)
-  const saveTimeoutRef = useRef<NodeJS.Timeout>()
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const toolbarRef = useRef<HTMLDivElement>(null)
 
   const isMobile = useMemo(() => typeof window !== "undefined" && window.innerWidth < 640, [])

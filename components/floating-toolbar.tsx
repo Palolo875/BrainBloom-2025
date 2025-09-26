@@ -12,9 +12,20 @@ interface FloatingToolbarProps {
   onColorChange: (color: string) => void
   onAIAction?: (action: string, params?: any) => void
   onStructuralAction?: (action: string, params?: any) => void
+  selectedText?: string
+  mode?: "selection" | "insertion"
+  position?: { top: number; left: number }
 }
 
-export function FloatingToolbar({ onFormat, onColorChange, onAIAction, onStructuralAction }: FloatingToolbarProps) {
+export function FloatingToolbar({ 
+  onFormat, 
+  onColorChange, 
+  onAIAction, 
+  onStructuralAction, 
+  selectedText = "",
+  mode = "selection",
+  position
+}: FloatingToolbarProps) {
   const [activeSubmenu, setActiveSubmenu] = useState<"ai" | "structural" | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [savedSelection, setSavedSelection] = useState<Range | null>(null)
@@ -62,10 +73,15 @@ export function FloatingToolbar({ onFormat, onColorChange, onAIAction, onStructu
     } else if (action === "structural") {
       setActiveSubmenu(activeSubmenu === "structural" ? null : "structural")
     } else if (action === "task") {
-      const selectedText = savedSelection?.toString() || ""
-      onStructuralAction?.("create-task", { text: selectedText })
+      const textToUse = selectedText || savedSelection?.toString() || ""
+      onStructuralAction?.("create-task", { text: textToUse })
     } else {
-      onFormat(action as any)
+      if (mode === "insertion" && !selectedText) {
+        // En mode insertion, on peut ajouter du formatage au curseur
+        onFormat(action as any)
+      } else {
+        onFormat(action as any)
+      }
     }
   }
 
@@ -75,13 +91,26 @@ export function FloatingToolbar({ onFormat, onColorChange, onAIAction, onStructu
       className={cn(
         "relative pointer-events-auto transition-all duration-300",
         isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95",
+        mode === "insertion" && "animate-in zoom-in-95 fade-in duration-300"
       )}
-      style={{ zIndex: 50000 }}
+      style={{ 
+        zIndex: 50000,
+        ...(position && { position: 'fixed', top: position.top, left: position.left })
+      }}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <div className="flex flex-col items-center gap-3">
-        <SoftUICard className="flex items-center gap-1 sm:gap-2 p-2 shadow-2xl border border-border/30 backdrop-blur-sm bg-background/95 max-w-full overflow-x-auto">
+        <div 
+          className="relative"
+          role="toolbar"
+          aria-label="Outils de formatage de texte"
+        >
+          <SoftUICard className={cn(
+            "flex items-center gap-1 sm:gap-2 p-2 shadow-2xl border backdrop-blur-sm max-w-full overflow-x-auto",
+            mode === "selection" ? "border-primary/40 bg-primary/5" : "border-accent/30 bg-background/95",
+            "ring-2 ring-primary/10"
+          )}>
           {toolbarButtons.map((button, index) => (
             <div
               key={button.action}
@@ -104,7 +133,8 @@ export function FloatingToolbar({ onFormat, onColorChange, onAIAction, onStructu
               </button>
             </div>
           ))}
-        </SoftUICard>
+          </SoftUICard>
+        </div>
 
         {activeSubmenu === "ai" && (
           <div className="animate-in slide-in-from-top-3 fade-in duration-200 ease-out">
