@@ -1,138 +1,76 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useEffect, useCallback } from "react"
+import { useAppStore } from "@/lib/stores/app-store"
 
-export interface Note {
-  id: string
-  title: string
-  content: string
-  excerpt: string
-  createdAt: Date
-  updatedAt: Date
-  tags: string[]
-  connections: string[]
-}
-
-const SAMPLE_NOTES: Note[] = [
+// Sample notes pour migration
+const SAMPLE_NOTES = [
   {
-    id: "1",
     title: "Morning Reflections",
-    content:
-      "Today I discovered the beauty in small moments. The way sunlight filters through leaves, creating dancing shadows on the ground. These micro-moments of wonder remind me to stay present and appreciate the simple joys that surround us daily.",
-    excerpt: "Today I discovered the beauty in small moments...",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    content: "Today I discovered the beauty in small moments. The way sunlight filters through leaves, creating dancing shadows on the ground. These micro-moments of wonder remind me to stay present and appreciate the simple joys that surround us daily.",
     tags: ["reflection", "mindfulness"],
-    connections: ["2", "4"],
+    connections: []
   },
   {
-    id: "2",
-    title: "Project Ideas",
-    content:
-      "A collection of creative projects that spark joy:\n\n1. Digital garden for knowledge management\n2. Meditation app with nature sounds\n3. Community art installation\n4. Sustainable living blog\n\nEach project should focus on bringing people together and creating positive impact.",
-    excerpt: "A collection of creative projects that spark joy...",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    title: "Project Ideas", 
+    content: "A collection of creative projects that spark joy:\n\n1. Digital garden for knowledge management\n2. Meditation app with nature sounds\n3. Community art installation\n4. Sustainable living blog\n\nEach project should focus on bringing people together and creating positive impact.",
     tags: ["projects", "creativity", "ideas"],
-    connections: ["1", "3"],
+    connections: []
   },
   {
-    id: "3",
     title: "Reading Notes: The Art of Living",
-    content:
-      "Key insights from Epictetus:\n\n- Focus on what you can control\n- Accept what you cannot change\n- Practice gratitude daily\n- Virtue is the only true good\n\n'You have power over your mind - not outside events. Realize this, and you will find strength.'",
-    excerpt: "Insights from 'The Art of Living' by Epictetus...",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    content: "Key insights from Epictetus:\n\n- Focus on what you can control\n- Accept what you cannot change\n- Practice gratitude daily\n- Virtue is the only true good\n\n'You have power over your mind - not outside events. Realize this, and you will find strength.'",
     tags: ["philosophy", "stoicism", "reading"],
-    connections: ["1"],
+    connections: []
   },
   {
-    id: "4",
     title: "Garden Planning",
-    content:
-      "Planning the layout for this spring's vegetable garden:\n\n**North Section:**\n- Tomatoes (cherry and beefsteak)\n- Peppers (bell and jalapeño)\n- Basil and oregano\n\n**South Section:**\n- Lettuce and spinach\n- Radishes and carrots\n- Herbs: thyme, rosemary, sage\n\nCompanion planting: tomatoes with basil, carrots with chives.",
-    excerpt: "Planning the layout for this spring's vegetable garden...",
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    content: "Planning the layout for this spring's vegetable garden:\n\n**North Section:**\n- Tomatoes (cherry and beefsteak)\n- Peppers (bell and jalapeño)\n- Basil and oregano\n\n**South Section:**\n- Lettuce and spinach\n- Radishes and carrots\n- Herbs: thyme, rosemary, sage\n\nCompanion planting: tomatoes with basil, carrots with chives.",
     tags: ["gardening", "planning", "nature"],
-    connections: ["1"],
-  },
+    connections: []
+  }
 ]
 
+// Hook compatible avec l'ancienne interface pour faciliter la migration
 export function useNotes() {
-  const [notes, setNotes] = useState<Note[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-
+  const notes = useAppStore(state => state.notes)
+  const addNote = useAppStore(state => state.addNote)
+  const updateNote = useAppStore(state => state.updateNote)
+  const deleteNote = useAppStore(state => state.deleteNote)
+  const searchQuery = useAppStore(state => state.searchQuery)
+  const setSearchQuery = useAppStore(state => state.setSearchQuery)
+  const getFilteredNotes = useAppStore(state => state.getFilteredNotes)
+  
+  // Migration des données d'exemple si le store est vide
   useEffect(() => {
-    setNotes(SAMPLE_NOTES)
-  }, [])
-
-  const filteredNotes = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return notes
+    if (notes.length === 0) {
+      SAMPLE_NOTES.forEach(note => {
+        addNote(note)
+      })
     }
-
-    const query = searchQuery.toLowerCase()
-    return notes.filter(
-      (note) =>
-        note.title.toLowerCase().includes(query) ||
-        note.content.toLowerCase().includes(query) ||
-        note.tags.some((tag) => tag.toLowerCase().includes(query)),
-    )
-  }, [notes, searchQuery])
+  }, [notes.length, addNote])
 
   const createNote = useCallback((title: string, content = "") => {
-    const newNote: Note = {
-      id: Date.now().toString(),
+    const noteId = addNote({
       title: title || "Untitled Note",
       content,
-      excerpt: content.slice(0, 100) + (content.length > 100 ? "..." : ""),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      tags: [],
-      connections: [],
-    }
-    setNotes((prev) => [newNote, ...prev])
-    return newNote
-  }, [])
+      tags: []
+    })
+    const newNote = notes.find(n => n.id === noteId)
+    return newNote || { id: noteId, title, content, tags: [], createdAt: '', updatedAt: '' }
+  }, [addNote, notes])
 
-  const updateNote = useCallback((id: string, updates: Partial<Note>) => {
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === id
-          ? {
-              ...note,
-              ...updates,
-              updatedAt: new Date(),
-              excerpt: updates.content
-                ? updates.content.slice(0, 100) + (updates.content.length > 100 ? "..." : "")
-                : note.excerpt,
-            }
-          : note,
-      ),
-    )
-  }, [])
+  const getNoteById = useCallback((id: string) => {
+    return notes.find(note => note.id === id)
+  }, [notes])
 
-  const deleteNote = useCallback((id: string) => {
-    setNotes((prev) => prev.filter((note) => note.id !== id))
-  }, [])
+  const getConnectedNotes = useCallback((noteId: string) => {
+    // Mock implementation for now - could be extended with actual connections
+    return []
+  }, [getNoteById])
 
-  const getNoteById = useCallback(
-    (id: string) => {
-      return notes.find((note) => note.id === id)
-    },
-    [notes],
-  )
-
-  const getConnectedNotes = useCallback(
-    (noteId: string) => {
-      const note = getNoteById(noteId)
-      if (!note) return []
-      return notes.filter((n) => note.connections.includes(n.id))
-    },
-    [notes, getNoteById],
-  )
+  // Utiliser les notes filtrées du store
+  const filteredNotes = getFilteredNotes()
 
   return {
     notes: filteredNotes,

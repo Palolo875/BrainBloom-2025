@@ -7,6 +7,8 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ErrorBoundary } from "@/components/error-boundary"
+import { AppInitializer } from "@/components/app-initializer"
 
 const lexend = Lexend({
   subsets: ["latin"],
@@ -34,9 +36,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${lexend.variable} ${lora.variable} ${GeistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Suspense fallback={null}>{children}</Suspense>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <AppInitializer>
+              <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>}>
+                {children}
+              </Suspense>
+            </AppInitializer>
+          </ThemeProvider>
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>
