@@ -1,0 +1,485 @@
+Améliorations Critiques Apportées
+1. Architecture Progressive & Robuste
+// Architecture en couches avec fallbacks
+┌─────────────────────────────────────┐
+│  UI Layer (Always Works)           │
+├─────────────────────────────────────┤
+│  Business Logic (Core Features)    │
+├─────────────────────────────────────┤
+│  Storage Layer (IndexedDB + LS)    │  ← Fallback automatique
+├─────────────────────────────────────┤
+│  AI Layer (Progressive Enhancement)│  ← Optionnel, non-bloquant
+└─────────────────────────────────────┘
+2. État Hybride Optimisé
+// lib/stores/app-store.ts - Store unifié et performant
+import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import { immer } from 'zustand/middleware/immer'
+
+interface AppState {
+  // Core State
+  notes: Note[]
+  currentNoteId: string | null
+  searchQuery: string
+  
+  // UI State  
+  ui: {
+    theme: 'light' | 'dark'
+    sidebarOpen: boolean
+    currentView: 'editor' | 'graph' | 'dashboard'
+    modals: Record<string, boolean>
+    toasts: Toast[]
+    isOffline: boolean
+  }
+  
+  // AI State
+  ai: {
+    status: 'loading' | 'ready' | 'error' | 'disabled'
+    models: Record<string, boolean>
+    cache: Map<string, any>
+    fallbackMode: boolean
+  }
+  
+  // Performance State
+  performance: {
+    lastSyncTime: number
+    pendingOperations: string[]
+    backgroundTasks: Set<string>
+  }
+}
+
+// Store avec middleware optimisé
+export const useAppStore = create<AppState>()(
+  subscribeWithSelector(
+    persist(
+      immer((set, get) => ({
+        // Initial state
+        notes: [],
+        currentNoteId: null,
+        searchQuery: '',
+        ui: {
+          theme: 'light',
+          sidebarOpen: true,
+          currentView: 'dashboard',
+          modals: {},
+          toasts: [],
+          isOffline: false
+        },
+        ai: {
+          status: 'loading',
+          models: {},
+          cache: new Map(),
+          fallbackMode: false
+        },
+        performance: {
+          lastSyncTime: Date.now(),
+          pendingOperations: [],
+          backgroundTasks: new Set()
+        },
+        
+        // Actions optimisées avec batching
+        actions: {
+          // Notes CRUD avec optimistic updates
+          addNote: (noteData: CreateNoteData) => set((state) => {
+            const note = {
+              ...noteData,
+              id: crypto.randomUUID(),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              status: 'draft' as const
+            }
+            
+            // Optimistic update
+            state.notes.unshift(note)
+            state.currentNoteId = note.id
+            
+            // Background processing
+            state.performance.backgroundTasks.add(`process-note-${note.id}`)
+          }),
+          
+          // Bulk operations pour performance
+          updateNotes: (updates: Record<string, Partial<Note>>) => set((state) => {
+            Object.entries(updates).forEach(([id, update]) => {
+              const index = state.notes.findIndex(n => n.id === id)
+              if (index !== -1) {
+                state.notes[index] = {
+                  ...state.notes[index],
+                  ...update,
+                  updatedAt: new Date()
+                }
+              }
+            })
+          }),
+          
+          // Search avec debounce intégré
+          setSearchQuery: (query: string) => set((state) => {
+            state.searchQuery = query
+            // Trigger search après debounce
+            state.performance.backgroundTasks.add('search')
+          }),
+          
+          // AI status management
+          setAIStatus: (status: AIStatus) => set((state) => {
+            state.ai.status = status
+            if (status === 'error') {
+              state.ai.fallbackMode = true
+            }
+          })
+        }
+      })),
+      {
+        name: 'brainbloom-store',
+        storage: createJSONStorage(() => ({
+          getItem: (name) => {
+            // Fallback chain: IndexedDB -> localStorage -> memory
+            return getFromIndexedDB(name)
+              .catch(() => localStorage.getItem(name))
+              .catch(() => null)
+          },
+          setItem: (name, value) => {
+            // Parallel saves avec error handling
+            Promise.allSettled([
+              saveToIndexedDB(name, value),
+              localStorage.setItem(name, value)
+            ])
+          },
+          removeItem: (name) => {
+            Promise.allSettled([
+              removeFromIndexedDB(name),
+              localStorage.removeItem(name)
+            ])
+          }
+        })),
+        partialize: (state) => ({
+          // Ne persister que l'essentiel
+          notes: state.notes,
+          ui: { theme: state.ui.theme, sidebarOpen: state.ui.sidebarOpen }
+        })
+      }
+    )
+  )
+)
+3. AI Engine Bulletproof avec Fallbacks
+// lib/ai/ai-engine.ts - IA robuste et progressive
+class EnhancedAIEngine {
+  private models = new Map<string, any>()
+  private fallbackSearch = new FuzzySearch()
+  private workerPool: Worker[] = []
+  private retryQueue = new Set<string>()
+  
+  // Configuration adaptive selon l'appareil
+  static getOptimalConfig(): AIConfig {
+    const memory = (navigator as any).deviceMemory || 4
+    const cores = navigator.hardwareConcurrency || 4
+    const connection = (navigator as any).connection?.effectiveType || '4g'
+    
+    if (memory >= 8 && cores >= 4 && connection === '4g') {
+      return {
+        model: 'all-mpnet-base-v2', // Meilleur modèle
+        batchSize: 32,
+        workerCount: 2
+      }
+    } else if (memory >= 4) {
+      return {
+        model: 'all-MiniLM-L6-v2', // Modèle équilibré
+        batchSize: 16,
+        workerCount: 1
+      }
+    } else {
+      return {
+        model: 'fallback', // Pas d'IA, juste recherche textuelle
+        batchSize: 8,
+        workerCount: 0
+      }
+    }
+  }
+  
+  async initialize(): Promise<boolean> {
+    const config = EnhancedAIEngine.getOptimalConfig()
+    
+    try {
+      // Fallback si pas de support IA
+      if (config.model === 'fallback') {
+        console.info('🧠 AI disabled, using fallback search')
+        useAppStore.getState().actions.setAIStatus('disabled')
+        return true // Success avec fallback
+      }
+      
+      // Chargement progressif avec timeout
+      const loadPromise = this.loadModel(config.model)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('AI load timeout')), 30000)
+      )
+      
+      await Promise.race([loadPromise, timeoutPromise])
+      
+      // Test du modèle
+      await this.generateEmbedding('test')
+      
+      useAppStore.getState().actions.setAIStatus('ready')
+      console.info('🧠 AI Engine ready')
+      return true
+      
+    } catch (error) {
+      console.warn('🧠 AI initialization failed, using fallback:', error)
+      useAppStore.getState().actions.setAIStatus('error')
+      return true // Toujours réussir avec fallback
+    }
+  }
+  
+  // Recherche hybride intelligente
+  async search(query: string, notes: Note[]): Promise<SearchResult[]> {
+    const startTime = performance.now()
+    
+    try {
+      // Recherche parallèle : IA + textuelle
+      const [semanticResults, textResults] = await Promise.allSettled([
+        this.semanticSearch(query, notes),
+        this.fallbackSearch.search(query, notes)
+      ])
+      
+      // Fusion des résultats
+      const aiResults = semanticResults.status === 'fulfilled' 
+        ? semanticResults.value 
+        : []
+        
+      const fallbackResults = textResults.status === 'fulfilled'
+        ? textResults.value
+        : []
+      
+      // Algorithme de fusion intelligent
+      const merged = this.mergeResults(aiResults, fallbackResults, {
+        aiWeight: aiResults.length > 0 ? 0.7 : 0,
+        textWeight: 0.3
+      })
+      
+      console.info(`🔍 Search completed in ${performance.now() - startTime}ms`)
+      return merged
+      
+    } catch (error) {
+      console.warn('Search error, using fallback:', error)
+      return this.fallbackSearch.search(query, notes)
+    }
+  }
+  
+  // Cache intelligent avec compression
+  private cache = new Map<string, {
+    data: any
+    timestamp: number
+    hits: number
+    compressed?: boolean
+  }>()
+  
+  async generateEmbedding(text: string): Promise<number[]> {
+    const cacheKey = `emb:${this.hashString(text)}`
+    const cached = this.cache.get(cacheKey)
+    
+    // Cache hit avec stats
+    if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+      cached.hits++
+      return cached.data
+    }
+    
+    try {
+      const result = await this.callWorker('embed', { text })
+      
+      // Cache avec compression si gros
+      const shouldCompress = JSON.stringify(result).length > 1000
+      const data = shouldCompress ? await this.compress(result) : result
+      
+      this.cache.set(cacheKey, {
+        data: shouldCompress ? await this.decompress(data) : data,
+        timestamp: Date.now(),
+        hits: 1,
+        compressed: shouldCompress
+      })
+      
+      // LRU cleanup
+      if (this.cache.size > 500) {
+        this.cleanupCache()
+      }
+      
+      return result
+      
+    } catch (error) {
+      console.warn('Embedding generation failed:', error)
+      // Fallback : embedding basé sur mots-clés
+      return this.generateKeywordEmbedding(text)
+    }
+  }
+}
+4. Composants UI Optimisés avec Suspense
+// components/notes/smart-editor.tsx - Éditeur intelligent
+'use client'
+
+import { Suspense, lazy, useState, useMemo, useCallback } from 'react'
+import { useAppStore } from '@/lib/stores/app-store'
+import { useDebounce } from '@/lib/hooks/use-debounce'
+import { ErrorBoundary } from '@/components/error-boundary'
+
+// Lazy loading des composants lourds
+const AIAssistant = lazy(() => import('./ai-assistant'))
+const GraphView = lazy(() => import('./graph-view'))
+const AdvancedEditor = lazy(() => import('./advanced-editor'))
+
+export function SmartEditor() {
+  const { currentNote, searchQuery, ai } = useAppStore()
+  const [content, setContent] = useState('')
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  
+  // Debounce pour performance
+  const debouncedContent = useDebounce(content, 1000)
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  
+  // Memoized operations
+  const editorConfig = useMemo(() => ({
+    autosave: true,
+    spellcheck: true,
+    autoComplete: ai.status === 'ready'
+  }), [ai.status])
+  
+  // Callbacks optimisés
+  const handleContentChange = useCallback((newContent: string) => {
+    setContent(newContent)
+    // Optimistic update sans attendre la sauvegarde
+    useAppStore.getState().actions.updateNote(currentNote?.id, {
+      content: newContent,
+      updatedAt: new Date()
+    })
+  }, [currentNote?.id])
+  
+  // AI suggestions avec fallback
+  const generateSuggestions = useCallback(async (text: string) => {
+    try {
+      if (ai.status === 'ready') {
+        const suggestions = await aiEngine.generateSuggestions(text)
+        setSuggestions(suggestions)
+      } else {
+        // Fallback : suggestions basiques
+        const basicSuggestions = generateBasicSuggestions(text)
+        setSuggestions(basicSuggestions)
+      }
+    } catch (error) {
+      console.warn('Suggestions failed:', error)
+      setSuggestions([])
+    }
+  }, [ai.status])
+  
+  // Effect pour suggestions
+  useEffect(() => {
+    if (debouncedContent.length > 50) {
+      generateSuggestions(debouncedContent)
+    }
+  }, [debouncedContent, generateSuggestions])
+  
+  return (
+    <div className="flex h-full">
+      {/* Éditeur principal */}
+      <div className="flex-1 flex flex-col">
+        <ErrorBoundary fallback={<SimpleEditor />}>
+          <Suspense fallback={<EditorSkeleton />}>
+            <AdvancedEditor
+              content={content}
+              onChange={handleContentChange}
+              config={editorConfig}
+              suggestions={suggestions}
+            />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+      
+      {/* Sidebar IA (si disponible) */}
+      {ai.status === 'ready' && (
+        <div className="w-80 border-l">
+          <ErrorBoundary fallback={<div>Assistant unavailable</div>}>
+            <Suspense fallback={<AssistantSkeleton />}>
+              <AIAssistant 
+                currentContent={debouncedContent}
+                suggestions={suggestions}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Composant fallback simple
+function SimpleEditor() {
+  return (
+    <textarea 
+      className="w-full h-full p-4 border-none resize-none focus:outline-none"
+      placeholder="Mode simple - Écrivez votre note..."
+    />
+  )
+}
+5. Performance Monitoring & Analytics
+// lib/performance/monitor.ts - Monitoring intelligent
+class PerformanceMonitor {
+  private metrics = new Map<string, number[]>()
+  private alerts = new Set<string>()
+  
+  // Métriques Core Web Vitals
+  measureCoreWebVitals() {
+    // LCP (Largest Contentful Paint)
+    new PerformanceObserver((list) => {
+      const entries = list.getEntries()
+      const lcp = entries[entries.length - 1]
+      this.recordMetric('LCP', lcp.startTime)
+      
+      if (lcp.startTime > 2500) {
+        this.alert('LCP', 'Chargement lent détecté')
+      }
+    }).observe({ type: 'largest-contentful-paint', buffered: true })
+    
+    // FID (First Input Delay)
+    new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        this.recordMetric('FID', entry.processingStart - entry.startTime)
+      })
+    }).observe({ type: 'first-input', buffered: true })
+  }
+  
+  // Monitoring IA spécifique
+  monitorAI() {
+    const originalMethod = aiEngine.generateEmbedding
+    aiEngine.generateEmbedding = async (text: string) => {
+      const start = performance.now()
+      try {
+        const result = await originalMethod.call(aiEngine, text)
+        const duration = performance.now() - start
+        
+        this.recordMetric('ai.embedding', duration)
+        
+        if (duration > 5000) {
+          this.alert('ai.slow', `Embedding lent: ${duration}ms`)
+        }
+        
+        return result
+      } catch (error) {
+        this.recordMetric('ai.error', 1)
+        throw error
+      }
+    }
+  }
+  
+  // Auto-optimization
+  optimizeBasedOnMetrics() {
+    const avgEmbeddingTime = this.getAverageMetric('ai.embedding')
+    
+    if (avgEmbeddingTime > 3000) {
+      // Basculer sur un modèle plus léger
+      console.warn('🐌 Switching to lighter AI model due to slow performance')
+      aiEngine.switchToLighterModel()
+    }
+    
+    const errorRate = this.getAverageMetric('ai.error')
+    if (errorRate > 0.1) {
+      // Activer le mode fallback
+      console.warn('❌ Enabling AI fallback mode due to high error rate')
+      useAppStore.getState().actions.setAIStatus('error')
+    }
+  }
+}
